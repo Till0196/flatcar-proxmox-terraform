@@ -53,12 +53,37 @@ data "ignition_systemd_unit" "nginx" {
     ])
 }
 
+data "ignition_file" "docker-compose" {
+    path = "/opt/extensions/docker-compose/docker-compose-2.35.1-x86-64.raw"
+    contents {
+        source = "https://github.com/flatcar/sysext-bakery/releases/download/docker-compose-2.35.1/docker-compose-2.35.1-x86-64.raw"
+    }
+}
+
+data "ignition_file" "docker-compose-conf" {
+    path = "/etc/sysupdate.docker-compose.d/docker-compose.conf"
+    contents {
+        source = "https://github.com/flatcar/sysext-bakery/releases/download/docker-compose-2.35.1/docker-compose.conf"
+    }
+}
+
+data "ignition_link" "docker-compose-symlink" {
+    path = "/etc/extensions/docker-compose.raw"
+    target = "/opt/extensions/docker-compose/docker-compose-2.35.1-x86-64.raw"
+    hard = false
+}
+
 data "ignition_config" "ignition" {
   users = [
     data.ignition_user.user.rendered,
   ]
   files = [
     data.ignition_file.hostname.rendered,
+    data.ignition_file.docker-compose.rendered,
+    data.ignition_file.docker-compose-conf.rendered
+  ]
+  links = [
+    data.ignition_link.docker-compose-symlink.rendered
   ]
   systemd = [
     data.ignition_systemd_unit.nginx.rendered,
